@@ -388,3 +388,56 @@ func (client *client) SendBatch(ctx context.Context, service, filePath string, m
 		StatusURL: response.StatusURL,
 	}, nil
 }
+
+func (client *client) CreateAndWaitJob(ctx context.Context, service, filePath, facematchFilePath, extraFilePath string, metadata map[string]any, params map[string]string) (jobResultResponse, error) {
+	response, err := client.SendJob(ctx, service, filePath, facematchFilePath, extraFilePath, metadata, params)
+	if err != nil {
+		return jobResultResponse{}, err
+	}
+
+	jobID := response.Id
+
+	return client.WaitForJobDone(ctx, jobID, jobID)
+}
+
+func (client *client) CreateAndWaitBatch(ctx context.Context, service, filePath string, metadata map[string]any, params map[string]string, waitJobs bool) (batchStatusResponse, error) {
+	response, err := client.SendBatch(ctx, service, filePath, metadata, params)
+	if err != nil {
+		return batchStatusResponse{}, err
+	}
+
+	return client.WaitForBatchDone(ctx, response.Id, waitJobs)
+}
+
+func (client *client) GetJobs(ctx context.Context, start, end string) ([]jobResultResponse, error) {
+	url := fmt.Sprintf("%s/ocr/job/results", client.BaseURL)
+	params := map[string]string{
+		"startDate": start,
+		"endtDate":  end,
+	}
+
+	jobs := []jobResultResponse{}
+	hasNextPage := true
+
+	for hasNextPage {
+		response, err := client.get(ctx, url, params)
+		if err != nil {
+			return nil, err
+		}
+
+		var res getJobsResponse
+		err = json.Unmarshal(response.body, &res)
+		if err != nil {
+			return nil, err
+		}
+
+		jobs = append(jobs, res.Jobs...)
+		params["nextPageToken"] = res.NextPageToken
+
+		if res.NextPageToken == "" {
+			hasNextPage = false
+		}
+	}
+
+	return jobs, nil
+}

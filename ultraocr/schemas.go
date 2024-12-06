@@ -76,3 +76,8 @@ type jobResultResponse struct {
 	ClientData       interface{} `json:"client_data,omitempty"`
 	Validation       interface{} `json:"validation,omitempty"`
 }
+
+type getJobsResponse struct {
+	Jobs          []jobResultResponse `json:"jobs"`
+	NextPageToken string              `json:"nextPageToken"`
+}
