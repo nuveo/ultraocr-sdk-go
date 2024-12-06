@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/nuveo/ultraocr-sdk-go/ultraocr/common"
@@ -180,4 +182,209 @@ func (client *client) GetJobResult(ctx context.Context, batchID, jobID string) (
 	err = json.Unmarshal(response.body, &res)
 
 	return res, err
+}
+
+func (client client) uploadFile(ctx context.Context, url string, body io.Reader) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, body)
+	if err != nil {
+		return err
+	}
+
+	res, err := client.HttpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != 200 {
+		return err
+	}
+
+	return nil
+}
+
+func (client client) UploadFileBase64(ctx context.Context, url string, data string) error {
+	return client.uploadFile(ctx, url, bytes.NewBufferString(data))
+}
+
+func (client client) UploadFile(ctx context.Context, url string, path string) error {
+	f, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	return client.uploadFile(ctx, url, bytes.NewBuffer(f))
+}
+
+func (client *client) WaitForJobDone(ctx context.Context, batchID, jobID string) (jobResultResponse, error) {
+	result, err := client.GetJobResult(ctx, batchID, jobID)
+	if err != nil {
+		return jobResultResponse{}, err
+	}
+
+	if result.Status != common.STATUS_DONE && result.Status != common.STATUS_ERROR {
+		time.Sleep(time.Second * time.Duration(client.Interval))
+		return client.WaitForJobDone(ctx, batchID, jobID)
+	}
+
+	return result, nil
+}
+
+func (client *client) WaitForBatchDone(ctx context.Context, batchID string, waitJobs bool) (batchStatusResponse, error) {
+	result, err := client.GetBatchStatus(ctx, batchID)
+	if err != nil {
+		return batchStatusResponse{}, err
+	}
+
+	if result.Status != common.STATUS_DONE && result.Status != common.STATUS_ERROR {
+		time.Sleep(time.Second * time.Duration(client.Interval))
+		return client.WaitForBatchDone(ctx, batchID, waitJobs)
+	}
+
+	if waitJobs {
+		for _, job := range result.Jobs {
+			_, err := client.WaitForJobDone(ctx, batchID, job.JobID)
+			if err != nil {
+				return batchStatusResponse{}, err
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func (client *client) SendJobSingleStep(ctx context.Context, service, file, facematchFile, extraFile string, metadata map[string]any, params map[string]string) (createdResponse, error) {
+	url := fmt.Sprintf("%s/ocr/job/send/%s", client.BaseURL, service)
+	body := map[string]any{
+		"data":     file,
+		"metadata": metadata,
+	}
+
+	if params["extra-document"] == "true" {
+		body["facematch"] = facematchFile
+
+	}
+
+	if params["facematch"] == "true" {
+		body["facematch"] = extraFile
+	}
+
+	response, err := client.post(ctx, url, body, params)
+	if err != nil {
+		return createdResponse{}, err
+	}
+
+	var res createdResponse
+	err = json.Unmarshal(response.body, &res)
+
+	return res, err
+}
+
+func (client *client) SendJobBase64(ctx context.Context, service, file, facematchFile, extraFile string, metadata map[string]any, params map[string]string) (createdResponse, error) {
+	p := map[string]string{
+		"base64": "true",
+	}
+	maps.Copy(p, params)
+
+	response, err := client.GenerateSignedUrl(ctx, service, common.RESOURCE_JOB, metadata, p)
+	if err != nil {
+		return createdResponse{}, err
+	}
+
+	urls := response.URLs
+	err = client.UploadFileBase64(ctx, urls["document"], file)
+	if err != nil {
+		return createdResponse{}, err
+	}
+
+	if p["facematch"] == "true" {
+		err = client.UploadFileBase64(ctx, urls["selfie"], extraFile)
+		if err != nil {
+			return createdResponse{}, err
+		}
+	}
+
+	if p["extra-document"] == "true" {
+		err = client.UploadFileBase64(ctx, urls["extra_document"], facematchFile)
+		if err != nil {
+			return createdResponse{}, err
+		}
+	}
+
+	return createdResponse{
+		Id:        response.Id,
+		StatusURL: response.StatusURL,
+	}, nil
+}
+
+func (client *client) SendJob(ctx context.Context, service, filePath, facematchFilePath, extraFilePath string, metadata map[string]any, params map[string]string) (createdResponse, error) {
+	response, err := client.GenerateSignedUrl(ctx, service, common.RESOURCE_JOB, metadata, params)
+	if err != nil {
+		return createdResponse{}, err
+	}
+
+	urls := response.URLs
+	err = client.UploadFile(ctx, urls["document"], filePath)
+	if err != nil {
+		return createdResponse{}, err
+	}
+
+	if params["facematch"] == "true" {
+		err = client.UploadFile(ctx, urls["selfie"], extraFilePath)
+		if err != nil {
+			return createdResponse{}, err
+		}
+	}
+
+	if params["extra-document"] == "true" {
+		err = client.UploadFile(ctx, urls["extra_document"], facematchFilePath)
+		if err != nil {
+			return createdResponse{}, err
+		}
+	}
+
+	return createdResponse{
+		Id:        response.Id,
+		StatusURL: response.StatusURL,
+	}, nil
+}
+
+func (client *client) SendBatchBase64(ctx context.Context, service, file string, metadata map[string]any, params map[string]string) (createdResponse, error) {
+	p := map[string]string{
+		"base64": "true",
+	}
+	maps.Copy(p, params)
+
+	response, err := client.GenerateSignedUrl(ctx, service, common.RESOURCE_BATCH, metadata, p)
+	if err != nil {
+		return createdResponse{}, err
+	}
+
+	urls := response.URLs
+	err = client.UploadFileBase64(ctx, urls["document"], file)
+	if err != nil {
+		return createdResponse{}, err
+	}
+
+	return createdResponse{
+		Id:        response.Id,
+		StatusURL: response.StatusURL,
+	}, nil
+}
+
+func (client *client) SendBatch(ctx context.Context, service, filePath string, metadata map[string]any, params map[string]string) (createdResponse, error) {
+	response, err := client.GenerateSignedUrl(ctx, service, common.RESOURCE_BATCH, metadata, params)
+	if err != nil {
+		return createdResponse{}, err
+	}
+
+	urls := response.URLs
+	err = client.UploadFile(ctx, urls["document"], filePath)
+	if err != nil {
+		return createdResponse{}, err
+	}
+
+	return createdResponse{
+		Id:        response.Id,
+		StatusURL: response.StatusURL,
+	}, nil
 }

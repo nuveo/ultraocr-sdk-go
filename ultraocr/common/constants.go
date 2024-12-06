@@ -9,4 +9,6 @@ const (
 	AUTH_BASE_URL           = "https://auth.apis.nuveo.ai/v2"
 	STATUS_DONE             = "done"
 	STATUS_ERROR            = "error"
+	RESOURCE_JOB            = "job"
+	RESOURCE_BATCH          = "batch"
 )

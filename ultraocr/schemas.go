@@ -35,6 +35,11 @@ type signedUrlResponse struct {
 	URLs      map[string]string `json:"urls"`
 }
 
+type createdResponse struct {
+	Id        string `json:"id"`
+	StatusURL string `json:"status_url"`
+}
+
 type batchStatusJobs struct {
 	JobID     string `json:"job_ksuid"`
 	CreatedAt string `json:"created_at"`
