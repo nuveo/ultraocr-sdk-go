@@ -158,6 +158,10 @@ func (client *client) Authenticate(ctx context.Context, clientID, clientSecret s
 		return err
 	}
 
+	if response.status != 200 {
+		return common.ErrInvalidStatusCode
+	}
+
 	var res tokenResponse
 	err = json.Unmarshal(response.body, &res)
 	if err != nil {
@@ -179,6 +183,10 @@ func (client *client) GenerateSignedUrl(ctx context.Context, service, resource s
 	response, err := client.post(ctx, url, metadata, params)
 	if err != nil {
 		return signedUrlResponse{}, err
+	}
+
+	if response.status != 200 {
+		return signedUrlResponse{}, common.ErrInvalidStatusCode
 	}
 
 	var res signedUrlResponse
@@ -216,6 +224,10 @@ func (client *client) GetBatchStatus(ctx context.Context, batchID string) (batch
 		return batchStatusResponse{}, err
 	}
 
+	if response.status != 200 {
+		return batchStatusResponse{}, common.ErrInvalidStatusCode
+	}
+
 	var res batchStatusResponse
 	err = json.Unmarshal(response.body, &res)
 	if err != nil {
@@ -232,6 +244,10 @@ func (client *client) GetJobResult(ctx context.Context, batchID, jobID string) (
 	response, err := client.get(ctx, url, nil)
 	if err != nil {
 		return jobResultResponse{}, err
+	}
+
+	if response.status != 200 {
+		return jobResultResponse{}, common.ErrInvalidStatusCode
 	}
 
 	var res jobResultResponse
@@ -259,6 +275,10 @@ func (client *client) GetJobs(ctx context.Context, start, end string) ([]jobResu
 		response, err := client.get(ctx, url, params)
 		if err != nil {
 			return nil, err
+		}
+
+		if response.status != 200 {
+			return nil, common.ErrInvalidStatusCode
 		}
 
 		var res getJobsResponse
@@ -359,6 +379,10 @@ func (client *client) SendJobSingleStep(ctx context.Context, service, file, face
 	response, err := client.post(ctx, url, body, params)
 	if err != nil {
 		return createdResponse{}, err
+	}
+
+	if response.status != 200 {
+		return createdResponse{}, common.ErrInvalidStatusCode
 	}
 
 	var res createdResponse
