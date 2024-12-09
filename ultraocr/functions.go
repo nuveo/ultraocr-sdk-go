@@ -41,12 +41,12 @@ func (client *client) SetHttpClient(httpClient *http.Client) {
 	client.HttpClient = httpClient
 }
 
-// SetInterval Changes the Client interval between requests on wait job and batch done.
+// SetInterval Changes the Client interval (in seconds) between requests on wait job and batch done.
 func (client *client) SetInterval(interval int) {
 	client.Interval = interval
 }
 
-// SetTimeout Changes the Client timeout on wait job and batch done.
+// SetTimeout Changes the Client (timeout in seconds) on wait job and batch done.
 func (client *client) SetTimeout(timeout int) {
 	client.Timeout = timeout
 }
@@ -282,31 +282,47 @@ func (client *client) GetJobs(ctx context.Context, start, end string) ([]jobResu
 // Have a timeout and an interval configured on the Client.
 // Requires the batch and job ID.
 func (client *client) WaitForJobDone(ctx context.Context, batchID, jobID string) (jobResultResponse, error) {
-	result, err := client.GetJobResult(ctx, batchID, jobID)
-	if err != nil {
-		return jobResultResponse{}, err
-	}
+	timeout := time.Now().Add(time.Duration(client.Timeout) * time.Second)
+	for {
+		result, err := client.GetJobResult(ctx, batchID, jobID)
+		if err != nil {
+			return jobResultResponse{}, err
+		}
 
-	if result.Status != common.STATUS_DONE && result.Status != common.STATUS_ERROR {
+		if result.Status == common.STATUS_DONE || result.Status == common.STATUS_ERROR {
+			return result, nil
+		}
+
+		if time.Now().After(timeout) {
+			return jobResultResponse{}, common.ErrTimeout
+		}
+
 		time.Sleep(time.Second * time.Duration(client.Interval))
-		return client.WaitForJobDone(ctx, batchID, jobID)
 	}
-
-	return result, nil
 }
 
 // WaitForBatchDone Waits for the batch status be done or error.
 // Have a timeout and an interval configured on the Client.
 // Requires the batch and an info if the utility will also wait the jobs to be done.
 func (client *client) WaitForBatchDone(ctx context.Context, batchID string, waitJobs bool) (batchStatusResponse, error) {
-	result, err := client.GetBatchStatus(ctx, batchID)
-	if err != nil {
-		return batchStatusResponse{}, err
-	}
+	timeout := time.Now().Add(time.Duration(client.Timeout) * time.Second)
+	var result batchStatusResponse
 
-	if result.Status != common.STATUS_DONE && result.Status != common.STATUS_ERROR {
+	for {
+		result, err := client.GetBatchStatus(ctx, batchID)
+		if err != nil {
+			return batchStatusResponse{}, err
+		}
+
+		if result.Status == common.STATUS_DONE || result.Status == common.STATUS_ERROR {
+			break
+		}
+
+		if time.Now().After(timeout) {
+			return batchStatusResponse{}, common.ErrTimeout
+		}
+
 		time.Sleep(time.Second * time.Duration(client.Interval))
-		return client.WaitForBatchDone(ctx, batchID, waitJobs)
 	}
 
 	if waitJobs {

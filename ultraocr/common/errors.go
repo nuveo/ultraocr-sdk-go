@@ -11,4 +11,5 @@ var (
 	ErrParsingRequestBody = errors.New("failed to parse request body")
 	ErrParsingResponse    = errors.New("failed to parse response body")
 	ErrReadFile           = errors.New("failed to read file")
+	ErrTimeout            = errors.New("pooling timeout")
 )
