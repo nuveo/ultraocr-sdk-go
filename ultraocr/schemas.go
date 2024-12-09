@@ -1,3 +1,4 @@
+// Package ultraocr implements utilities to help on the UltraOCR API usage.
 package ultraocr
 
 import (

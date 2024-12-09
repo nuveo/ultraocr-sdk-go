@@ -1,5 +1,7 @@
+// Package common implements constants and errors.
 package common
 
+// SDK Constants.
 const (
 	POOLING_INTERVAL        = 1
 	API_TIMEOUT             = 30
