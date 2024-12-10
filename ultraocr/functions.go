@@ -1,4 +1,4 @@
-// Package ultraocr implements utilities to help on the UltraOCR API usage
+// Package ultraocr implements utilities to help on the UltraOCR API usage.
 package ultraocr
 
 import (
@@ -153,17 +153,26 @@ func (client *client) Authenticate(ctx context.Context, clientID, clientSecret s
 		return common.ErrParsingRequestBody
 	}
 
-	response, err := client.request(ctx, url, http.MethodPost, bytes.NewReader(data), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
-		return err
+		return common.ErrMountingRequest
+	}
+	req.Header.Set("Accept", "application/json")
+
+	response, err := client.HttpClient.Do(req)
+	if err != nil {
+		return common.ErrDoingRequest
 	}
 
-	if response.status != 200 {
+	defer response.Body.Close()
+
+	resBody, _ := io.ReadAll(response.Body)
+	if response.StatusCode != 200 {
 		return common.ErrInvalidStatusCode
 	}
 
 	var res tokenResponse
-	err = json.Unmarshal(response.body, &res)
+	err = json.Unmarshal(resBody, &res)
 	if err != nil {
 		return common.ErrParsingResponse
 	}
@@ -296,65 +305,6 @@ func (client *client) GetJobs(ctx context.Context, start, end string) ([]jobResu
 	}
 
 	return jobs, nil
-}
-
-// WaitForJobDone Waits for the job status be done or error.
-// Have a timeout and an interval configured on the Client.
-// Requires the batch and job ID.
-func (client *client) WaitForJobDone(ctx context.Context, batchID, jobID string) (jobResultResponse, error) {
-	timeout := time.Now().Add(time.Duration(client.Timeout) * time.Second)
-	for {
-		result, err := client.GetJobResult(ctx, batchID, jobID)
-		if err != nil {
-			return jobResultResponse{}, err
-		}
-
-		if result.Status == common.STATUS_DONE || result.Status == common.STATUS_ERROR {
-			return result, nil
-		}
-
-		if time.Now().After(timeout) {
-			return jobResultResponse{}, common.ErrTimeout
-		}
-
-		time.Sleep(time.Second * time.Duration(client.Interval))
-	}
-}
-
-// WaitForBatchDone Waits for the batch status be done or error.
-// Have a timeout and an interval configured on the Client.
-// Requires the batch and an info if the utility will also wait the jobs to be done.
-func (client *client) WaitForBatchDone(ctx context.Context, batchID string, waitJobs bool) (batchStatusResponse, error) {
-	timeout := time.Now().Add(time.Duration(client.Timeout) * time.Second)
-	var result batchStatusResponse
-
-	for {
-		result, err := client.GetBatchStatus(ctx, batchID)
-		if err != nil {
-			return batchStatusResponse{}, err
-		}
-
-		if result.Status == common.STATUS_DONE || result.Status == common.STATUS_ERROR {
-			break
-		}
-
-		if time.Now().After(timeout) {
-			return batchStatusResponse{}, common.ErrTimeout
-		}
-
-		time.Sleep(time.Second * time.Duration(client.Interval))
-	}
-
-	if waitJobs {
-		for _, job := range result.Jobs {
-			_, err := client.WaitForJobDone(ctx, batchID, job.JobID)
-			if err != nil {
-				return batchStatusResponse{}, err
-			}
-		}
-	}
-
-	return result, nil
 }
 
 // SendJobSingleStep Sends a job in single step, with 6MB body limit.
@@ -512,6 +462,65 @@ func (client *client) SendBatch(ctx context.Context, service, filePath string, m
 		Id:        response.Id,
 		StatusURL: response.StatusURL,
 	}, nil
+}
+
+// WaitForJobDone Waits for the job status be done or error.
+// Have a timeout and an interval configured on the Client.
+// Requires the batch and job ID.
+func (client *client) WaitForJobDone(ctx context.Context, batchID, jobID string) (jobResultResponse, error) {
+	timeout := time.Now().Add(time.Duration(client.Timeout) * time.Second)
+	for {
+		result, err := client.GetJobResult(ctx, batchID, jobID)
+		if err != nil {
+			return jobResultResponse{}, err
+		}
+
+		if result.Status == common.STATUS_DONE || result.Status == common.STATUS_ERROR {
+			return result, nil
+		}
+
+		if time.Now().After(timeout) {
+			return jobResultResponse{}, common.ErrTimeout
+		}
+
+		time.Sleep(time.Second * time.Duration(client.Interval))
+	}
+}
+
+// WaitForBatchDone Waits for the batch status be done or error.
+// Have a timeout and an interval configured on the Client.
+// Requires the batch and an info if the utility will also wait the jobs to be done.
+func (client *client) WaitForBatchDone(ctx context.Context, batchID string, waitJobs bool) (batchStatusResponse, error) {
+	timeout := time.Now().Add(time.Duration(client.Timeout) * time.Second)
+	var result batchStatusResponse
+
+	for {
+		result, err := client.GetBatchStatus(ctx, batchID)
+		if err != nil {
+			return batchStatusResponse{}, err
+		}
+
+		if result.Status == common.STATUS_DONE || result.Status == common.STATUS_ERROR {
+			break
+		}
+
+		if time.Now().After(timeout) {
+			return batchStatusResponse{}, common.ErrTimeout
+		}
+
+		time.Sleep(time.Second * time.Duration(client.Interval))
+	}
+
+	if waitJobs {
+		for _, job := range result.Jobs {
+			_, err := client.WaitForJobDone(ctx, batchID, job.JobID)
+			if err != nil {
+				return batchStatusResponse{}, err
+			}
+		}
+	}
+
+	return result, nil
 }
 
 // CreateAndWaitJob Creates and wait a job to be done.
