@@ -558,6 +558,26 @@ func TestAuthenticate(t *testing.T) {
 					},
 				},
 			},
+			args: args{
+				ctx: context.Background(),
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid status code",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 403,
+							Body:       http.NoBody,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+			},
 			wantErr: true,
 		},
 	}
@@ -1669,6 +1689,414 @@ func TestSendBatch(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("client.SendBatch() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestWaitForJobDone(t *testing.T) {
+	type fields struct {
+		Timeout    int
+		Interval   int
+		HttpClient HttpClient
+	}
+	type args struct {
+		batchID string
+		jobID   string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    jobResultResponse
+		wantErr bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"job_ksuid":"123","status":"done"}`))),
+						}, nil
+					},
+				},
+			},
+			want: jobResultResponse{
+				JobID:  "123",
+				Status: "done",
+			},
+		},
+		{
+			name: "invalid status code",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 500,
+							Body:       http.NoBody,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "timeout",
+			fields: fields{
+				Timeout:  1,
+				Interval: 1,
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"id":"123","status":"processing"}`))),
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &client{
+				Timeout:    tt.fields.Timeout,
+				Interval:   tt.fields.Interval,
+				HttpClient: tt.fields.HttpClient,
+			}
+			got, err := client.WaitForJobDone(context.Background(), tt.args.batchID, tt.args.jobID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("client.WaitForJobDone() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("client.WaitForJobDone() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestWaitForBatchDone(t *testing.T) {
+	a := 0
+	type fields struct {
+		Timeout    int
+		Interval   int
+		HttpClient HttpClient
+	}
+	type args struct {
+		batchID  string
+		waitJobs bool
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    batchStatusResponse
+		wantErr bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"batch_ksuid":"123","status":"done"}`))),
+						}, nil
+					},
+				},
+			},
+			want: batchStatusResponse{
+				BatchID: "123",
+				Status:  "done",
+			},
+		},
+		{
+			name: "success with wait jobs",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"batch_ksuid":"123","status":"done","jobs":[{"job_ksuid":"1234","status":"done"}]}`))),
+						}, nil
+					},
+				},
+			},
+			args: args{
+				waitJobs: true,
+			},
+			want: batchStatusResponse{
+				BatchID: "123",
+				Status:  "done",
+				Jobs: []batchStatusJobs{
+					{
+						Status: "done",
+						JobID:  "1234",
+					},
+				},
+			},
+		},
+		{
+			name: "failed to wait jobs",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						a += 1
+						if a == 1 {
+							return &http.Response{
+								StatusCode: 200,
+								Body:       io.NopCloser(bytes.NewReader([]byte(`{"batch_ksuid":"123","status":"done","jobs":[{"job_ksuid":"1234","status":"processing"}]}`))),
+							}, nil
+						}
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"job_ksuid":"1234","status":"processing"}`))),
+						}, nil
+					},
+				},
+				Timeout:  1,
+				Interval: 1,
+			},
+			args: args{
+				waitJobs: true,
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid status code",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 500,
+							Body:       http.NoBody,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "timeout",
+			fields: fields{
+				Timeout:  1,
+				Interval: 1,
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"id":"123","status":"processing"}`))),
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &client{
+				Timeout:    tt.fields.Timeout,
+				Interval:   tt.fields.Interval,
+				HttpClient: tt.fields.HttpClient,
+			}
+			got, err := client.WaitForBatchDone(context.Background(), tt.args.batchID, tt.args.waitJobs)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("client.WaitForBatchDone() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("client.WaitForBatchDone() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCreateAndWaitJob(t *testing.T) {
+	type fields struct {
+		HttpClient HttpClient
+	}
+	type args struct {
+		service           string
+		filePath          string
+		facematchFilePath string
+		extraFilePath     string
+		metadata          map[string]any
+		params            map[string]string
+	}
+	f, _ := os.CreateTemp(".", "")
+	defer os.Remove(f.Name())
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    jobResultResponse
+		wantErr bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"job_ksuid":"123","status":"done"}`))),
+						}, nil
+					},
+				},
+			},
+			args: args{
+				filePath: f.Name(),
+			},
+			want: jobResultResponse{
+				JobID:  "123",
+				Status: "done",
+			},
+		},
+		{
+			name: "invalid status code",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 500,
+							Body:       http.NoBody,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid wait status code",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						if req.Method == "PUT" {
+							return &http.Response{
+								StatusCode: 200,
+								Body:       http.NoBody,
+							}, nil
+						}
+
+						return &http.Response{
+							StatusCode: 500,
+							Body:       http.NoBody,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &client{
+				HttpClient: tt.fields.HttpClient,
+			}
+			got, err := client.CreateAndWaitJob(context.Background(), tt.args.service, tt.args.filePath, tt.args.facematchFilePath, tt.args.extraFilePath, tt.args.metadata, tt.args.params)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("client.CreateAndWaitJob() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("client.CreateAndWaitJob() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCreateAndWaitBatch(t *testing.T) {
+	type fields struct {
+		HttpClient HttpClient
+	}
+	type args struct {
+		service  string
+		filePath string
+		metadata map[string]any
+		params   map[string]string
+		waitJobs bool
+	}
+	f, _ := os.CreateTemp(".", "")
+	defer os.Remove(f.Name())
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    batchStatusResponse
+		wantErr bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"batch_ksuid":"123","status":"done"}`))),
+						}, nil
+					},
+				},
+			},
+			args: args{
+				filePath: f.Name(),
+			},
+			want: batchStatusResponse{
+				BatchID: "123",
+				Status:  "done",
+			},
+		},
+		{
+			name: "invalid status code",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 500,
+							Body:       http.NoBody,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid wait status code",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						if req.Method == "PUT" {
+							return &http.Response{
+								StatusCode: 200,
+								Body:       http.NoBody,
+							}, nil
+						}
+
+						return &http.Response{
+							StatusCode: 500,
+							Body:       http.NoBody,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &client{
+				HttpClient: tt.fields.HttpClient,
+			}
+			got, err := client.CreateAndWaitBatch(context.Background(), tt.args.service, tt.args.filePath, tt.args.metadata, tt.args.params, tt.args.waitJobs)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("client.CreateAndWaitBatch() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("client.CreateAndWaitBatch() = %v, want %v", got, tt.want)
 			}
 		})
 	}
