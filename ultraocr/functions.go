@@ -37,7 +37,7 @@ func (client *client) SetAuthBaseURL(url string) {
 }
 
 // SetAuthBaseURL Changes the Client HTTP Client.
-func (client *client) SetHttpClient(httpClient *http.Client) {
+func (client *client) SetHttpClient(httpClient HttpClient) {
 	client.HttpClient = httpClient
 }
 
