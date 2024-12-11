@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+type HttpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 type client struct {
 	BaseURL      string
 	AuthBaseURL  string
@@ -17,7 +21,7 @@ type client struct {
 	Timeout      int
 	Interval     int
 	ExpiresAt    time.Time
-	HttpClient   *http.Client
+	HttpClient   HttpClient
 }
 
 type Response struct {
