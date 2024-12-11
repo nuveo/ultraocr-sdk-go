@@ -493,9 +493,10 @@ func (client *client) WaitForJobDone(ctx context.Context, batchID, jobID string)
 func (client *client) WaitForBatchDone(ctx context.Context, batchID string, waitJobs bool) (batchStatusResponse, error) {
 	timeout := time.Now().Add(time.Duration(client.Timeout) * time.Second)
 	var result batchStatusResponse
+	var err error
 
 	for {
-		result, err := client.GetBatchStatus(ctx, batchID)
+		result, err = client.GetBatchStatus(ctx, batchID)
 		if err != nil {
 			return batchStatusResponse{}, err
 		}
