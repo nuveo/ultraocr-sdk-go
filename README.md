@@ -124,7 +124,7 @@ Example of response from `GenerateSignedUrl` with facematch and extra files:
 
 ```go
 SignedUrlResponse{
-	Expires: "60000",
+	Expires: 60000,
 	Id: "0ujsszwN8NRY24YaXiTIE2VWDTS",
 	StatusURL: "https://ultraocr.apis.nuveo.ai/v2/ocr/batch/status/0ujsszwN8NRY24YaXiTIE2VWDTS",
 	URLs: map[string]string{

@@ -34,7 +34,7 @@ type tokenResponse struct {
 }
 
 type SignedUrlResponse struct {
-	Expires   string            `json:"exp"`
+	Expires   int               `json:"exp"`
 	Id        string            `json:"id"`
 	StatusURL string            `json:"status_url"`
 	URLs      map[string]string `json:"urls"`

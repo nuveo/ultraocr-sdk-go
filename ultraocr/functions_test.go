@@ -617,7 +617,7 @@ func TestGenerateSignedUrl(t *testing.T) {
 					MockDo: func(req *http.Request) (*http.Response, error) {
 						return &http.Response{
 							StatusCode: 200,
-							Body:       io.NopCloser(bytes.NewReader([]byte(`{"id":"123","status_url":"url","urls":{},"exp": "60000"}`))),
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"id":"123","status_url":"url","urls":{},"exp": 60000}`))),
 						}, nil
 					},
 				},
@@ -625,7 +625,7 @@ func TestGenerateSignedUrl(t *testing.T) {
 			want: SignedUrlResponse{
 				Id:        "123",
 				StatusURL: "url",
-				Expires:   "60000",
+				Expires:   60000,
 				URLs:      map[string]string{},
 			},
 		},
