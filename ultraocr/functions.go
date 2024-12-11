@@ -36,7 +36,7 @@ func (client *client) SetAuthBaseURL(url string) {
 	client.AuthBaseURL = url
 }
 
-// SetAuthBaseURL Changes the Client HTTP Client.
+// SetHttpClient Changes the Client HTTP Client.
 func (client *client) SetHttpClient(httpClient HttpClient) {
 	client.HttpClient = httpClient
 }
@@ -60,7 +60,13 @@ func (client *client) SetAutoRefresh(clientID, clientSecret string, expires int)
 	client.ExpiresAt = time.Now()
 }
 
-func (client client) request(ctx context.Context, url, method string, body io.Reader, params map[string]string) (Response, error) {
+func (client client) request(
+	ctx context.Context,
+	url,
+	method string,
+	body io.Reader,
+	params map[string]string,
+) (Response, error) {
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return Response{}, common.ErrMountingRequest
@@ -89,7 +95,12 @@ func (client client) request(ctx context.Context, url, method string, body io.Re
 	}, nil
 }
 
-func (client client) post(ctx context.Context, url string, body map[string]any, params map[string]string) (Response, error) {
+func (client client) post(
+	ctx context.Context,
+	url string,
+	body map[string]any,
+	params map[string]string,
+) (Response, error) {
 	err := client.autoAuthenticate(ctx)
 	if err != nil {
 		return Response{}, err
@@ -186,7 +197,13 @@ func (client *client) Authenticate(ctx context.Context, clientID, clientSecret s
 // GenerateSignedUrl Generates a signed url to upload the document image to be processed.
 // Requires the service (document type), the resource (job or batch)
 // and the required metadata and query params.
-func (client *client) GenerateSignedUrl(ctx context.Context, service, resource string, metadata map[string]any, params map[string]string) (signedUrlResponse, error) {
+func (client *client) GenerateSignedUrl(
+	ctx context.Context,
+	service,
+	resource string,
+	metadata map[string]any,
+	params map[string]string,
+) (signedUrlResponse, error) {
 	url := fmt.Sprintf("%s/ocr/%s/%s", client.BaseURL, resource, service)
 
 	response, err := client.post(ctx, url, metadata, params)
@@ -225,8 +242,8 @@ func (client client) UploadFile(ctx context.Context, url string, path string) er
 }
 
 // GetBatchStatus Gets the batch status. Requires the batch ID.
-func (client *client) GetBatchStatus(ctx context.Context, batchID string) (batchStatusResponse, error) {
-	url := fmt.Sprintf("%s/ocr/batch/status/%s", client.BaseURL, batchID)
+func (client *client) GetBatchStatus(ctx context.Context, ID string) (batchStatusResponse, error) {
+	url := fmt.Sprintf("%s/ocr/batch/status/%s", client.BaseURL, ID)
 
 	response, err := client.get(ctx, url, nil)
 	if err != nil {
@@ -310,7 +327,15 @@ func (client *client) GetJobs(ctx context.Context, start, end string) ([]jobResu
 // SendJobSingleStep Sends a job in single step, with 6MB body limit.
 // Requires the service, the files (facematch and extra file if requested on params)
 // on base64 format and the required metadata and query params.
-func (client *client) SendJobSingleStep(ctx context.Context, service, file, facematchFile, extraFile string, metadata map[string]any, params map[string]string) (createdResponse, error) {
+func (client *client) SendJobSingleStep(
+	ctx context.Context,
+	service,
+	file,
+	facematchFile,
+	extraFile string,
+	metadata map[string]any,
+	params map[string]string,
+) (createdResponse, error) {
 	url := fmt.Sprintf("%s/ocr/job/send/%s", client.BaseURL, service)
 	body := map[string]any{
 		"data":     file,
@@ -347,7 +372,14 @@ func (client *client) SendJobSingleStep(ctx context.Context, service, file, face
 // SendJobBase64 Sends a job on base64 format.
 // Requires the service, the files (facematch and extra file if requested on params)
 // on base64 format and the required metadata and query params.
-func (client *client) SendJobBase64(ctx context.Context, service, file, facematchFile, extraFile string, metadata map[string]any, params map[string]string) (createdResponse, error) {
+func (client *client) SendJobBase64(ctx context.Context,
+	service,
+	file,
+	facematchFile,
+	extraFile string,
+	metadata map[string]any,
+	params map[string]string,
+) (createdResponse, error) {
 	p := map[string]string{
 		"base64": "true",
 	}
@@ -387,7 +419,14 @@ func (client *client) SendJobBase64(ctx context.Context, service, file, facematc
 // SendJob Sends a job.
 // Requires the service, the files (facematch and extra file if requested on params) paths
 // and the required metadata and query params.
-func (client *client) SendJob(ctx context.Context, service, filePath, facematchFilePath, extraFilePath string, metadata map[string]any, params map[string]string) (createdResponse, error) {
+func (client *client) SendJob(ctx context.Context,
+	service,
+	filePath,
+	facematchFilePath,
+	extraFilePath string,
+	metadata map[string]any,
+	params map[string]string,
+) (createdResponse, error) {
 	response, err := client.GenerateSignedUrl(ctx, service, common.RESOURCE_JOB, metadata, params)
 	if err != nil {
 		return createdResponse{}, err
@@ -421,7 +460,12 @@ func (client *client) SendJob(ctx context.Context, service, filePath, facematchF
 
 // SendBatchBase64 Sends a batch on base64 format.
 // Requires the service, the file on base64 format and the required metadata and query params.
-func (client *client) SendBatchBase64(ctx context.Context, service, file string, metadata map[string]any, params map[string]string) (createdResponse, error) {
+func (client *client) SendBatchBase64(ctx context.Context,
+	service,
+	file string,
+	metadata map[string]any,
+	params map[string]string,
+) (createdResponse, error) {
 	p := map[string]string{
 		"base64": "true",
 	}
@@ -446,7 +490,12 @@ func (client *client) SendBatchBase64(ctx context.Context, service, file string,
 
 // SendBatch Sends a batch.
 // Requires the service, the file path and the required metadata and query params.
-func (client *client) SendBatch(ctx context.Context, service, filePath string, metadata map[string]any, params map[string]string) (createdResponse, error) {
+func (client *client) SendBatch(ctx context.Context,
+	service,
+	filePath string,
+	metadata map[string]any,
+	params map[string]string,
+) (createdResponse, error) {
 	response, err := client.GenerateSignedUrl(ctx, service, common.RESOURCE_BATCH, metadata, params)
 	if err != nil {
 		return createdResponse{}, err
@@ -490,13 +539,13 @@ func (client *client) WaitForJobDone(ctx context.Context, batchID, jobID string)
 // WaitForBatchDone Waits for the batch status be done or error.
 // Have a timeout and an interval configured on the Client.
 // Requires the batch and an info if the utility will also wait the jobs to be done.
-func (client *client) WaitForBatchDone(ctx context.Context, batchID string, waitJobs bool) (batchStatusResponse, error) {
+func (client *client) WaitForBatchDone(ctx context.Context, ID string, waitJobs bool) (batchStatusResponse, error) {
 	timeout := time.Now().Add(time.Duration(client.Timeout) * time.Second)
 	var result batchStatusResponse
 	var err error
 
 	for {
-		result, err = client.GetBatchStatus(ctx, batchID)
+		result, err = client.GetBatchStatus(ctx, ID)
 		if err != nil {
 			return batchStatusResponse{}, err
 		}
@@ -514,7 +563,7 @@ func (client *client) WaitForBatchDone(ctx context.Context, batchID string, wait
 
 	if waitJobs {
 		for _, job := range result.Jobs {
-			_, err := client.WaitForJobDone(ctx, batchID, job.JobID)
+			_, err := client.WaitForJobDone(ctx, ID, job.JobID)
 			if err != nil {
 				return batchStatusResponse{}, err
 			}
@@ -527,7 +576,14 @@ func (client *client) WaitForBatchDone(ctx context.Context, batchID string, wait
 // CreateAndWaitJob Creates and wait a job to be done.
 // Have a timeout and an interval configured on the Client.
 // Requires the service, files paths and required metadata and query params.
-func (client *client) CreateAndWaitJob(ctx context.Context, service, filePath, facematchFilePath, extraFilePath string, metadata map[string]any, params map[string]string) (jobResultResponse, error) {
+func (client *client) CreateAndWaitJob(ctx context.Context,
+	service,
+	filePath,
+	facematchFilePath,
+	extraFilePath string,
+	metadata map[string]any,
+	params map[string]string,
+) (jobResultResponse, error) {
 	response, err := client.SendJob(ctx, service, filePath, facematchFilePath, extraFilePath, metadata, params)
 	if err != nil {
 		return jobResultResponse{}, err
@@ -540,7 +596,13 @@ func (client *client) CreateAndWaitJob(ctx context.Context, service, filePath, f
 // CreateAndWaitJob Creates and wait a batch to be done.
 // Have a timeout and an interval configured on the Client.
 // Requires the service, file path and required metadata and query params.
-func (client *client) CreateAndWaitBatch(ctx context.Context, service, filePath string, metadata map[string]any, params map[string]string, waitJobs bool) (batchStatusResponse, error) {
+func (client *client) CreateAndWaitBatch(ctx context.Context,
+	service,
+	filePath string,
+	metadata map[string]any,
+	params map[string]string,
+	waitJobs bool,
+) (batchStatusResponse, error) {
 	response, err := client.SendBatch(ctx, service, filePath, metadata, params)
 	if err != nil {
 		return batchStatusResponse{}, err
