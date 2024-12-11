@@ -69,7 +69,7 @@ client.SendJobSingleStep(CONTEXT, "SERVICE", "BASE64_DATA", "", "", METADATA, PA
 Send batch response example:
 
 ```go
-createdResponse{
+CreatedResponse{
     Id: "0ujsszwN8NRY24YaXiTIE2VWDTS",
 	StatusURL: "https://ultraocr.apis.nuveo.ai/v2/ocr/batch/status/0ujsszwN8NRY24YaXiTIE2VWDTS",
 }
@@ -78,7 +78,7 @@ createdResponse{
 Send job response example:
 
 ```go
-createdResponse{
+CreatedResponse{
     Id: "0ujsszwN8NRY24YaXiTIE2VWDTS",
 	StatusURL: "https://ultraocr.apis.nuveo.ai/v2/ocr/job/result/0ujsszwN8NRY24YaXiTIE2VWDTS",
 }
@@ -123,7 +123,7 @@ res, err = httpClient.Do(req)
 Example of response from `GenerateSignedUrl` with facematch and extra files:
 
 ```go
-signedUrlResponse{
+SignedUrlResponse{
 	Expires: "60000",
 	Id: "0ujsszwN8NRY24YaXiTIE2VWDTS",
 	StatusURL: "https://ultraocr.apis.nuveo.ai/v2/ocr/batch/status/0ujsszwN8NRY24YaXiTIE2VWDTS",
@@ -157,12 +157,12 @@ client.WaitForJobDone(CONTEXT, "BATCH_ID", "JOB_ID") // Jobs belonging to batche
 Batch status example:
 
 ```go
-batchStatusResponse{
+BatchStatusResponse{
 	BatchID: "2AwrSd7bxEMbPrQ5jZHGDzQ4qL3",
 	CreatedAt: "2022-06-22T20:58:09Z",
 	Service: "cnh",
 	Status: "done",
-	Jobs: []batchStatusJobs{
+	Jobs: []BatchStatusJobs{
         {
             JobID: "0ujsszwN8NRY24YaXiTIE2VWDTS",
             CreatedAt: "2022-06-22T20:58:09Z",
@@ -176,12 +176,12 @@ batchStatusResponse{
 Job result example:
 
 ```go
-jobResultResponse{
+JobResultResponse{
 	JobID: "2AwrSd7bxEMbPrQ5jZHGDzQ4qL3",
 	CreatedAt: "2022-06-22T20:58:09Z",
 	Service: "idtypification",
 	Status: "done",
-    Result: result{
+    Result: Result{
         Time: "7.45",
         Document: []map[string]any{
             {
@@ -229,7 +229,7 @@ client.GetJobs(CONTEXT, "START_DATE", "END_DATE") // Dates in 2006-01-02 format 
 Results:
 
 ```go
-[]jobResultResponse{
+[]JobResultResponse{
     {
         JobID: "2AwrSd7bxEMbPrQ5jZHGDzQ4qL3",
         CreatedAt: "2022-06-22T20:58:09Z",

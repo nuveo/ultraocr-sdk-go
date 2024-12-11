@@ -10,7 +10,7 @@ type HttpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-type client struct {
+type Client struct {
 	BaseURL      string
 	AuthBaseURL  string
 	Token        string
@@ -33,19 +33,19 @@ type tokenResponse struct {
 	Token string `json:"token"`
 }
 
-type signedUrlResponse struct {
+type SignedUrlResponse struct {
 	Expires   string            `json:"exp"`
 	Id        string            `json:"id"`
 	StatusURL string            `json:"status_url"`
 	URLs      map[string]string `json:"urls"`
 }
 
-type createdResponse struct {
+type CreatedResponse struct {
 	Id        string `json:"id"`
 	StatusURL string `json:"status_url"`
 }
 
-type batchStatusJobs struct {
+type BatchStatusJobs struct {
 	JobID     string `json:"job_ksuid"`
 	CreatedAt string `json:"created_at"`
 	ResultURL string `json:"result_url"`
@@ -53,23 +53,23 @@ type batchStatusJobs struct {
 	Error     string `json:"error,omitempty"`
 }
 
-type batchStatusResponse struct {
+type BatchStatusResponse struct {
 	BatchID   string            `json:"batch_ksuid"`
 	CreatedAt string            `json:"created_at"`
 	Service   string            `json:"service"`
 	Status    string            `json:"status"`
 	Error     string            `json:"error,omitempty"`
-	Jobs      []batchStatusJobs `json:"jobs"`
+	Jobs      []BatchStatusJobs `json:"jobs"`
 }
 
-type result struct {
+type Result struct {
 	Document interface{} `json:"Document,omitempty"`
 	Quantity int         `json:"Quantity,omitempty"`
 	Time     string      `json:"Time,omitempty"`
 }
 
-type jobResultResponse struct {
-	Result           result      `json:"result,omitempty"`
+type JobResultResponse struct {
+	Result           Result      `json:"result,omitempty"`
 	JobID            string      `json:"job_ksuid"`
 	CreatedAt        string      `json:"created_at"`
 	Service          string      `json:"service"`
@@ -82,7 +82,7 @@ type jobResultResponse struct {
 	Validation       interface{} `json:"validation,omitempty"`
 }
 
-type getJobsResponse struct {
-	Jobs          []jobResultResponse `json:"jobs"`
+type GetJobsResponse struct {
+	Jobs          []JobResultResponse `json:"jobs"`
 	NextPageToken string              `json:"nextPageToken"`
 }

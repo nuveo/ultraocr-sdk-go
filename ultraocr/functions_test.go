@@ -27,11 +27,11 @@ func (c *ClientMock) Do(req *http.Request) (*http.Response, error) {
 func TestNewClient(t *testing.T) {
 	tests := []struct {
 		name string
-		want client
+		want Client
 	}{
 		{
 			name: "success",
-			want: client{
+			want: Client{
 				BaseURL:     common.BASE_URL,
 				AuthBaseURL: common.AUTH_BASE_URL,
 				Interval:    common.POOLING_INTERVAL,
@@ -54,7 +54,7 @@ func TestSets(t *testing.T) {
 		c := NewClient()
 
 		c.SetBaseURL("url")
-		want := client{
+		want := Client{
 			BaseURL:     "url",
 			AuthBaseURL: common.AUTH_BASE_URL,
 			Interval:    common.POOLING_INTERVAL,
@@ -66,7 +66,7 @@ func TestSets(t *testing.T) {
 		}
 
 		c.SetAuthBaseURL("url")
-		want = client{
+		want = Client{
 			BaseURL:     "url",
 			AuthBaseURL: "url",
 			Interval:    common.POOLING_INTERVAL,
@@ -78,7 +78,7 @@ func TestSets(t *testing.T) {
 		}
 
 		c.SetInterval(3)
-		want = client{
+		want = Client{
 			BaseURL:     "url",
 			AuthBaseURL: "url",
 			Interval:    3,
@@ -90,7 +90,7 @@ func TestSets(t *testing.T) {
 		}
 
 		c.SetTimeout(10)
-		want = client{
+		want = Client{
 			BaseURL:     "url",
 			AuthBaseURL: "url",
 			Interval:    3,
@@ -104,7 +104,7 @@ func TestSets(t *testing.T) {
 		c.SetHttpClient(&http.Client{
 			Timeout: 20,
 		})
-		want = client{
+		want = Client{
 			BaseURL:     "url",
 			AuthBaseURL: "url",
 			Interval:    3,
@@ -118,7 +118,7 @@ func TestSets(t *testing.T) {
 		}
 
 		c.SetAutoRefresh("id", "secret", 10)
-		want = client{
+		want = Client{
 			BaseURL:     "url",
 			AuthBaseURL: "url",
 			Interval:    3,
@@ -208,7 +208,7 @@ func TestRequest(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := client{
+			client := Client{
 				HttpClient: &tt.fields.HttpClient,
 			}
 			got, err := client.request(tt.args.ctx, tt.args.url, tt.args.method, tt.args.body, tt.args.params)
@@ -309,7 +309,7 @@ func TestPost(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := client{
+			client := Client{
 				AutoRefresh: tt.fields.AutoRefresh,
 				ExpiresAt:   tt.fields.ExpiresAt,
 				HttpClient:  tt.fields.HttpClient,
@@ -411,7 +411,7 @@ func TestGet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := client{
+			client := Client{
 				AutoRefresh: tt.fields.AutoRefresh,
 				ExpiresAt:   tt.fields.ExpiresAt,
 				HttpClient:  tt.fields.HttpClient,
@@ -500,7 +500,7 @@ func Test_UploadFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := client{
+			client := Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			if err := client.uploadFile(tt.args.ctx, tt.args.url, tt.args.body); (err != nil) != tt.wantErr {
@@ -583,7 +583,7 @@ func TestAuthenticate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			if err := client.Authenticate(tt.args.ctx, tt.args.clientID, tt.args.clientSecret, tt.args.expires); (err != nil) != tt.wantErr {
@@ -607,7 +607,7 @@ func TestGenerateSignedUrl(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    signedUrlResponse
+		want    SignedUrlResponse
 		wantErr bool
 	}{
 		{
@@ -622,7 +622,7 @@ func TestGenerateSignedUrl(t *testing.T) {
 					},
 				},
 			},
-			want: signedUrlResponse{
+			want: SignedUrlResponse{
 				Id:        "123",
 				StatusURL: "url",
 				Expires:   "60000",
@@ -657,7 +657,7 @@ func TestGenerateSignedUrl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			got, err := client.GenerateSignedUrl(context.Background(), tt.args.service, tt.args.resource, tt.args.metadata, tt.args.params)
@@ -719,7 +719,7 @@ func TestUploadFileBase64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := client{
+			client := Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			if err := client.UploadFileBase64(context.Background(), tt.args.url, tt.args.data); (err != nil) != tt.wantErr {
@@ -786,7 +786,7 @@ func TestUploadFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := client{
+			client := Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			if err := client.UploadFile(context.Background(), tt.args.url, tt.args.path); (err != nil) != tt.wantErr {
@@ -807,7 +807,7 @@ func TestGetBatchStatus(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    batchStatusResponse
+		want    BatchStatusResponse
 		wantErr bool
 	}{
 		{
@@ -822,12 +822,12 @@ func TestGetBatchStatus(t *testing.T) {
 					},
 				},
 			},
-			want: batchStatusResponse{
+			want: BatchStatusResponse{
 				BatchID:   "123",
 				CreatedAt: "2024-01-01",
 				Service:   "rg",
 				Status:    "done",
-				Jobs: []batchStatusJobs{
+				Jobs: []BatchStatusJobs{
 					{
 						JobID:     "1234",
 						CreatedAt: "2024-01-01",
@@ -865,7 +865,7 @@ func TestGetBatchStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			got, err := client.GetBatchStatus(context.Background(), tt.args.batchID)
@@ -892,7 +892,7 @@ func TestGetJobResult(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    jobResultResponse
+		want    JobResultResponse
 		wantErr bool
 	}{
 		{
@@ -907,7 +907,7 @@ func TestGetJobResult(t *testing.T) {
 					},
 				},
 			},
-			want: jobResultResponse{
+			want: JobResultResponse{
 				JobID:     "1234",
 				CreatedAt: "2024-01-01",
 				Service:   "rg",
@@ -942,7 +942,7 @@ func TestGetJobResult(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			got, err := client.GetJobResult(context.Background(), tt.args.batchID, tt.args.jobID)
@@ -970,7 +970,7 @@ func TestGetJobs(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    []jobResultResponse
+		want    []JobResultResponse
 		wantErr bool
 	}{
 		{
@@ -992,7 +992,7 @@ func TestGetJobs(t *testing.T) {
 					},
 				},
 			},
-			want: []jobResultResponse{
+			want: []JobResultResponse{
 				{
 					JobID:     "1234",
 					CreatedAt: "2024-01-01",
@@ -1035,7 +1035,7 @@ func TestGetJobs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			got, err := client.GetJobs(context.Background(), tt.args.start, tt.args.end)
@@ -1066,7 +1066,7 @@ func TestSendJobSingleStep(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    createdResponse
+		want    CreatedResponse
 		wantErr bool
 	}{
 		{
@@ -1081,7 +1081,7 @@ func TestSendJobSingleStep(t *testing.T) {
 					},
 				},
 			},
-			want: createdResponse{
+			want: CreatedResponse{
 				Id:        "123",
 				StatusURL: "url/123",
 			},
@@ -1104,7 +1104,7 @@ func TestSendJobSingleStep(t *testing.T) {
 					"facematch":      "true",
 				},
 			},
-			want: createdResponse{
+			want: CreatedResponse{
 				Id:        "123",
 				StatusURL: "url/123",
 			},
@@ -1137,7 +1137,7 @@ func TestSendJobSingleStep(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			got, err := client.SendJobSingleStep(context.Background(), tt.args.service, tt.args.file, tt.args.facematchFile, tt.args.extraFile, tt.args.metadata, tt.args.params)
@@ -1170,7 +1170,7 @@ func TestSendJobBase64(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    createdResponse
+		want    CreatedResponse
 		wantErr bool
 	}{
 		{
@@ -1185,7 +1185,7 @@ func TestSendJobBase64(t *testing.T) {
 					},
 				},
 			},
-			want: createdResponse{
+			want: CreatedResponse{
 				Id:        "123",
 				StatusURL: "url/123",
 			},
@@ -1208,7 +1208,7 @@ func TestSendJobBase64(t *testing.T) {
 					"facematch":      "true",
 				},
 			},
-			want: createdResponse{
+			want: CreatedResponse{
 				Id:        "123",
 				StatusURL: "url/123",
 			},
@@ -1313,7 +1313,7 @@ func TestSendJobBase64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			got, err := client.SendJobBase64(context.Background(), tt.args.service, tt.args.file, tt.args.facematchFile, tt.args.extraFile, tt.args.metadata, tt.args.params)
@@ -1345,7 +1345,7 @@ func TestSendJob(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    createdResponse
+		want    CreatedResponse
 		wantErr bool
 	}{
 		{
@@ -1360,7 +1360,7 @@ func TestSendJob(t *testing.T) {
 					},
 				},
 			},
-			want: createdResponse{
+			want: CreatedResponse{
 				Id:        "123",
 				StatusURL: "url/123",
 			},
@@ -1383,7 +1383,7 @@ func TestSendJob(t *testing.T) {
 					"facematch":      "true",
 				},
 			},
-			want: createdResponse{
+			want: CreatedResponse{
 				Id:        "123",
 				StatusURL: "url/123",
 			},
@@ -1488,7 +1488,7 @@ func TestSendJob(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			got, err := client.SendJob(context.Background(), tt.args.service, f.Name(), f.Name(), f.Name(), tt.args.metadata, tt.args.params)
@@ -1517,7 +1517,7 @@ func TestSendBatchBase64(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    createdResponse
+		want    CreatedResponse
 		wantErr bool
 	}{
 		{
@@ -1532,7 +1532,7 @@ func TestSendBatchBase64(t *testing.T) {
 					},
 				},
 			},
-			want: createdResponse{
+			want: CreatedResponse{
 				Id:        "123",
 				StatusURL: "url/123",
 			},
@@ -1583,7 +1583,7 @@ func TestSendBatchBase64(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			got, err := client.SendBatchBase64(context.Background(), tt.args.service, tt.args.file, tt.args.metadata, tt.args.params)
@@ -1613,7 +1613,7 @@ func TestSendBatch(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    createdResponse
+		want    CreatedResponse
 		wantErr bool
 	}{
 		{
@@ -1628,7 +1628,7 @@ func TestSendBatch(t *testing.T) {
 					},
 				},
 			},
-			want: createdResponse{
+			want: CreatedResponse{
 				Id:        "123",
 				StatusURL: "url/123",
 			},
@@ -1679,7 +1679,7 @@ func TestSendBatch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			got, err := client.SendBatch(context.Background(), tt.args.service, f.Name(), tt.args.metadata, tt.args.params)
@@ -1708,7 +1708,7 @@ func TestWaitForJobDone(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    jobResultResponse
+		want    JobResultResponse
 		wantErr bool
 	}{
 		{
@@ -1723,7 +1723,7 @@ func TestWaitForJobDone(t *testing.T) {
 					},
 				},
 			},
-			want: jobResultResponse{
+			want: JobResultResponse{
 				JobID:  "123",
 				Status: "done",
 			},
@@ -1761,7 +1761,7 @@ func TestWaitForJobDone(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				Timeout:    tt.fields.Timeout,
 				Interval:   tt.fields.Interval,
 				HttpClient: tt.fields.HttpClient,
@@ -1793,7 +1793,7 @@ func TestWaitForBatchDone(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    batchStatusResponse
+		want    BatchStatusResponse
 		wantErr bool
 	}{
 		{
@@ -1808,7 +1808,7 @@ func TestWaitForBatchDone(t *testing.T) {
 					},
 				},
 			},
-			want: batchStatusResponse{
+			want: BatchStatusResponse{
 				BatchID: "123",
 				Status:  "done",
 			},
@@ -1828,10 +1828,10 @@ func TestWaitForBatchDone(t *testing.T) {
 			args: args{
 				waitJobs: true,
 			},
-			want: batchStatusResponse{
+			want: BatchStatusResponse{
 				BatchID: "123",
 				Status:  "done",
-				Jobs: []batchStatusJobs{
+				Jobs: []BatchStatusJobs{
 					{
 						Status: "done",
 						JobID:  "1234",
@@ -1898,7 +1898,7 @@ func TestWaitForBatchDone(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				Timeout:    tt.fields.Timeout,
 				Interval:   tt.fields.Interval,
 				HttpClient: tt.fields.HttpClient,
@@ -1933,7 +1933,7 @@ func TestCreateAndWaitJob(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    jobResultResponse
+		want    JobResultResponse
 		wantErr bool
 	}{
 		{
@@ -1951,7 +1951,7 @@ func TestCreateAndWaitJob(t *testing.T) {
 			args: args{
 				filePath: f.Name(),
 			},
-			want: jobResultResponse{
+			want: JobResultResponse{
 				JobID:  "123",
 				Status: "done",
 			},
@@ -1994,7 +1994,7 @@ func TestCreateAndWaitJob(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			got, err := client.CreateAndWaitJob(context.Background(), tt.args.service, tt.args.filePath, tt.args.facematchFilePath, tt.args.extraFilePath, tt.args.metadata, tt.args.params)
@@ -2026,7 +2026,7 @@ func TestCreateAndWaitBatch(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    batchStatusResponse
+		want    BatchStatusResponse
 		wantErr bool
 	}{
 		{
@@ -2044,7 +2044,7 @@ func TestCreateAndWaitBatch(t *testing.T) {
 			args: args{
 				filePath: f.Name(),
 			},
-			want: batchStatusResponse{
+			want: BatchStatusResponse{
 				BatchID: "123",
 				Status:  "done",
 			},
@@ -2087,7 +2087,7 @@ func TestCreateAndWaitBatch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &client{
+			client := &Client{
 				HttpClient: tt.fields.HttpClient,
 			}
 			got, err := client.CreateAndWaitBatch(context.Background(), tt.args.service, tt.args.filePath, tt.args.metadata, tt.args.params, tt.args.waitJobs)
