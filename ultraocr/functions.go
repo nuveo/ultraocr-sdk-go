@@ -500,7 +500,15 @@ func (client *Client) SendBatch(ctx context.Context,
 	metadata []map[string]any,
 	params map[string]string,
 ) (CreatedResponse, error) {
-	response, err := client.GenerateSignedUrl(ctx, service, common.RESOURCE_BATCH, metadata, params)
+	var response SignedUrlResponse
+	var err error
+
+	if len(metadata) == 0 {
+		response, err = client.GenerateSignedUrl(ctx, service, common.RESOURCE_BATCH, nil, params)
+	} else {
+		response, err = client.GenerateSignedUrl(ctx, service, common.RESOURCE_BATCH, metadata, params)
+	}
+
 	if err != nil {
 		return CreatedResponse{}, err
 	}
