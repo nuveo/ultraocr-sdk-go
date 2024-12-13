@@ -1606,7 +1606,7 @@ func TestSendBatch(t *testing.T) {
 	}
 	type args struct {
 		service  string
-		metadata map[string]any
+		metadata []map[string]any
 		params   map[string]string
 	}
 	tests := []struct {
@@ -2016,7 +2016,7 @@ func TestCreateAndWaitBatch(t *testing.T) {
 	type args struct {
 		service  string
 		filePath string
-		metadata map[string]any
+		metadata []map[string]any
 		params   map[string]string
 		waitJobs bool
 	}

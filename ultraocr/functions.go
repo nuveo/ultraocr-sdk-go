@@ -98,7 +98,7 @@ func (client Client) request(
 func (client Client) post(
 	ctx context.Context,
 	url string,
-	body map[string]any,
+	body any,
 	params map[string]string,
 ) (Response, error) {
 	err := client.autoAuthenticate(ctx)
@@ -201,7 +201,7 @@ func (client *Client) GenerateSignedUrl(
 	ctx context.Context,
 	service,
 	resource string,
-	metadata map[string]any,
+	metadata any,
 	params map[string]string,
 ) (SignedUrlResponse, error) {
 	url := fmt.Sprintf("%s/ocr/%s/%s", client.BaseURL, resource, service)
@@ -493,7 +493,7 @@ func (client *Client) SendBatchBase64(ctx context.Context,
 func (client *Client) SendBatch(ctx context.Context,
 	service,
 	filePath string,
-	metadata map[string]any,
+	metadata []map[string]any,
 	params map[string]string,
 ) (CreatedResponse, error) {
 	response, err := client.GenerateSignedUrl(ctx, service, common.RESOURCE_BATCH, metadata, params)
@@ -599,7 +599,7 @@ func (client *Client) CreateAndWaitJob(ctx context.Context,
 func (client *Client) CreateAndWaitBatch(ctx context.Context,
 	service,
 	filePath string,
-	metadata map[string]any,
+	metadata []map[string]any,
 	params map[string]string,
 	waitJobs bool,
 ) (BatchStatusResponse, error) {
