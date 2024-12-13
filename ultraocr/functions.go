@@ -106,12 +106,16 @@ func (client Client) post(
 		return Response{}, err
 	}
 
-	data, err := json.Marshal(body)
-	if err != nil {
-		return Response{}, common.ErrParsingRequestBody
+	if body != nil {
+		data, err := json.Marshal(body)
+		if err != nil {
+			return Response{}, common.ErrParsingRequestBody
+		}
+
+		return client.request(ctx, url, http.MethodPost, bytes.NewReader(data), params)
 	}
 
-	return client.request(ctx, url, http.MethodPost, bytes.NewReader(data), params)
+	return client.request(ctx, url, http.MethodPost, nil, params)
 }
 
 func (client Client) get(ctx context.Context, url string, params map[string]string) (Response, error) {
