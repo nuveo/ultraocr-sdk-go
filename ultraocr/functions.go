@@ -347,7 +347,7 @@ func (client *Client) SendJobSingleStep(
 	}
 
 	if params["extra-document"] == "true" {
-		body["facematch"] = facematchFile
+		body["extra"] = facematchFile
 
 	}
 
