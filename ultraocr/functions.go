@@ -346,13 +346,13 @@ func (client *Client) SendJobSingleStep(
 		"metadata": metadata,
 	}
 
-	if params["extra-document"] == "true" {
+	if params[common.KEY_EXTRA] == common.FLAG_TRUE {
 		body["extra"] = facematchFile
 
 	}
 
-	if params["facematch"] == "true" {
-		body["facematch"] = extraFile
+	if params[common.KEY_FACEMATCH] == common.FLAG_TRUE {
+		body[common.KEY_FACEMATCH] = extraFile
 	}
 
 	response, err := client.post(ctx, url, body, params)
@@ -385,7 +385,7 @@ func (client *Client) SendJobBase64(ctx context.Context,
 	params map[string]string,
 ) (CreatedResponse, error) {
 	p := map[string]string{
-		"base64": "true",
+		"base64": common.FLAG_TRUE,
 	}
 	maps.Copy(p, params)
 
@@ -400,14 +400,14 @@ func (client *Client) SendJobBase64(ctx context.Context,
 		return CreatedResponse{}, err
 	}
 
-	if p["facematch"] == "true" {
+	if p[common.KEY_FACEMATCH] == common.FLAG_TRUE {
 		err = client.UploadFileBase64(ctx, urls["selfie"], extraFile)
 		if err != nil {
 			return CreatedResponse{}, err
 		}
 	}
 
-	if p["extra-document"] == "true" {
+	if p[common.KEY_EXTRA] == common.FLAG_TRUE {
 		err = client.UploadFileBase64(ctx, urls["extra_document"], facematchFile)
 		if err != nil {
 			return CreatedResponse{}, err
@@ -442,14 +442,14 @@ func (client *Client) SendJob(ctx context.Context,
 		return CreatedResponse{}, err
 	}
 
-	if params["facematch"] == "true" {
+	if params[common.KEY_FACEMATCH] == common.FLAG_TRUE {
 		err = client.UploadFile(ctx, urls["selfie"], extraFilePath)
 		if err != nil {
 			return CreatedResponse{}, err
 		}
 	}
 
-	if params["extra-document"] == "true" {
+	if params[common.KEY_EXTRA] == common.FLAG_TRUE {
 		err = client.UploadFile(ctx, urls["extra_document"], facematchFilePath)
 		if err != nil {
 			return CreatedResponse{}, err
@@ -471,7 +471,7 @@ func (client *Client) SendBatchBase64(ctx context.Context,
 	params map[string]string,
 ) (CreatedResponse, error) {
 	p := map[string]string{
-		"base64": "true",
+		"base64": common.FLAG_TRUE,
 	}
 	maps.Copy(p, params)
 

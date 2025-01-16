@@ -13,4 +13,7 @@ const (
 	STATUS_ERROR            = "error"
 	RESOURCE_JOB            = "job"
 	RESOURCE_BATCH          = "batch"
+	KEY_FACEMATCH           = "facematch"
+	KEY_EXTRA               = "extra-document"
+	FLAG_TRUE               = "true"
 )
