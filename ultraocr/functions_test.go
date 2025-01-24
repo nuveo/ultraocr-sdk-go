@@ -1510,7 +1510,7 @@ func TestSendBatchBase64(t *testing.T) {
 	type args struct {
 		service  string
 		file     string
-		metadata map[string]any
+		metadata []map[string]any
 		params   map[string]string
 	}
 	tests := []struct {
