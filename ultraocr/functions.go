@@ -106,7 +106,7 @@ func (client Client) post(
 	body any,
 	params map[string]string,
 ) (Response, error) {
-	if isNil(body) {
+	if !isNil(body) {
 		data, err := json.Marshal(body)
 		if err != nil {
 			return Response{}, common.ErrParsingRequestBody
