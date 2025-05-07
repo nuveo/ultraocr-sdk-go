@@ -148,6 +148,21 @@ func (client Client) uploadFile(ctx context.Context, url string, body io.Reader)
 	return nil
 }
 
+func (client *Client) getBatchResult(ctx context.Context, ID string, params map[string]string) ([]byte, error) {
+	url := fmt.Sprintf("%s/ocr/batch/result/%s", client.BaseURL, ID)
+
+	response, err := client.get(ctx, url, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.status != 200 {
+		return nil, common.ErrInvalidStatusCode
+	}
+
+	return response.body, nil
+}
+
 // Authenticate Generates a token on UltraOCR and save the token to use on future requests.
 // Requires the Client informations (ID and Secret) and the token expiration time (in minutes).
 func (client *Client) Authenticate(ctx context.Context, clientID, clientSecret string, expires int) error {
@@ -652,21 +667,6 @@ func (client *Client) GetBatchInfo(ctx context.Context, ID string) (BatchInfoRes
 	}
 
 	return res, nil
-}
-
-func (client *Client) getBatchResult(ctx context.Context, ID string, params map[string]string) ([]byte, error) {
-	url := fmt.Sprintf("%s/ocr/batch/result/%s", client.BaseURL, ID)
-
-	response, err := client.get(ctx, url, params)
-	if err != nil {
-		return nil, err
-	}
-
-	if response.status != 200 {
-		return nil, common.ErrInvalidStatusCode
-	}
-
-	return response.body, nil
 }
 
 // GetBatchResult Gets batch job results.
