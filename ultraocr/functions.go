@@ -655,7 +655,7 @@ func (client *Client) GetBatchInfo(ctx context.Context, ID string) (BatchInfoRes
 }
 
 func (client *Client) getBatchResult(ctx context.Context, ID string, params map[string]string) ([]byte, error) {
-	url := fmt.Sprintf("%s/ocr/batch/info/%s", client.BaseURL, ID)
+	url := fmt.Sprintf("%s/ocr/batch/result/%s", client.BaseURL, ID)
 
 	response, err := client.get(ctx, url, params)
 	if err != nil {
