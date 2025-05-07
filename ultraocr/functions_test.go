@@ -2101,3 +2101,307 @@ func TestCreateAndWaitBatch(t *testing.T) {
 		})
 	}
 }
+
+func TestGetJobInfo(t *testing.T) {
+	type fields struct {
+		HttpClient HttpClient
+	}
+	type args struct {
+		ID string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    JobInfoResponse
+		wantErr bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"job_id":"1234","created_at":"2024-01-01","status":"done","service":"rg"}`))),
+						}, nil
+					},
+				},
+			},
+			want: JobInfoResponse{
+				JobID:     "1234",
+				CreatedAt: "2024-01-01",
+				Service:   "rg",
+				Status:    "done",
+			},
+		},
+		{
+			name: "failed doing request",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return nil, errors.New("123")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid status",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 403,
+							Body:       http.NoBody,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &Client{
+				HttpClient: tt.fields.HttpClient,
+			}
+			got, err := client.GetJobInfo(context.Background(), tt.args.ID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Client.GetJobInfo() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Client.GetJobInfo() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetBatchInfo(t *testing.T) {
+	type fields struct {
+		HttpClient HttpClient
+	}
+	type args struct {
+		ID string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    BatchInfoResponse
+		wantErr bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"batch_id":"123","created_at":"2024-01-01","status":"done","service":"rg","jobs":[{"job_ksuid":"1234","created_at":"2024-01-01","status":"done","result_url":"url"}]}`))),
+						}, nil
+					},
+				},
+			},
+			want: BatchInfoResponse{
+				BatchID:   "123",
+				CreatedAt: "2024-01-01",
+				Service:   "rg",
+				Status:    "done",
+			},
+		},
+		{
+			name: "failed doing request",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return nil, errors.New("123")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid status",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 403,
+							Body:       http.NoBody,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &Client{
+				HttpClient: tt.fields.HttpClient,
+			}
+			got, err := client.GetBatchInfo(context.Background(), tt.args.ID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Client.GetBatchInfo() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Client.GetBatchInfo() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetBatchResultStorage(t *testing.T) {
+	type fields struct {
+		HttpClient HttpClient
+	}
+	type args struct {
+		ID     string
+		params map[string]string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    BatchResultStorageResponse
+		wantErr bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"url":"123","exp":100}`))),
+						}, nil
+					},
+				},
+			},
+			want: BatchResultStorageResponse{
+				Url: "123",
+				Exp: 100,
+			},
+		},
+		{
+			name: "failed doing request",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return nil, errors.New("123")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid status",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 403,
+							Body:       http.NoBody,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &Client{
+				HttpClient: tt.fields.HttpClient,
+			}
+			got, err := client.GetBatchResultStorage(context.Background(), tt.args.ID, tt.args.params)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Client.GetBatchResultStorage() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Client.GetBatchResultStorage() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetBatchResult(t *testing.T) {
+	type fields struct {
+		HttpClient HttpClient
+	}
+	type args struct {
+		ID string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []BatchResultJob
+		wantErr bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 200,
+							Body:       io.NopCloser(bytes.NewReader([]byte(`[{"job_ksuid":"123","status":"done","service":"cnh"}]`))),
+						}, nil
+					},
+				},
+			},
+			want: []BatchResultJob{
+				{
+					JobKSUID: "123",
+					Status:   "done",
+					Service:  "cnh",
+				},
+			},
+		},
+		{
+			name: "failed doing request",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return nil, errors.New("123")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid status",
+			fields: fields{
+				HttpClient: &ClientMock{
+					MockDo: func(req *http.Request) (*http.Response, error) {
+						return &http.Response{
+							StatusCode: 403,
+							Body:       http.NoBody,
+						}, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &Client{
+				HttpClient: tt.fields.HttpClient,
+			}
+			got, err := client.GetBatchResult(context.Background(), tt.args.ID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Client.GetBatchResult() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Client.GetBatchResult() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -143,6 +143,12 @@ With the job or batch id, you can get the job result or batch status with:
 client.GetBatchStatus(CONTEXT, "BATCH_ID") // Batches
 client.GetJobResult(CONTEXT, "JOB_ID", "JOB_ID") // Simple jobs
 client.GetJobResult(CONTEXT, "BATCH_ID", "JOB_ID") // Jobs belonging to batches
+client.GetBatchResult(CONTEXT, "BATCH_ID") // Get batch jobs result as array
+client.GetBatchResultStorage(CONTEXT, "BATCH_ID", PARAMS) // Get batch jobs result in a file
+
+// More details about job and batch
+client.GetBatchInfo(CONTEXT, "BATCH_ID") // Batches info (without jobs info)
+client.GetJobInfo(CONTEXT, "JOB_ID") // Jobs info (single jobs only)
 ```
 
 Alternatively, you can use a utily `WaitForJobDone` or `WaitForBatchDone`:

@@ -86,3 +86,53 @@ type GetJobsResponse struct {
 	Jobs          []JobResultResponse `json:"jobs"`
 	NextPageToken string              `json:"nextPageToken"`
 }
+
+type BatchInfoResponse struct {
+	ValidationID   string `json:"validation_id,omitempty"`
+	BatchID        string `json:"batch_id,omitempty"`
+	ClientID       string `json:"client_id,omitempty"`
+	CompanyID      string `json:"company_id,omitempty"`
+	CreatedAt      string `json:"created_at,omitempty"`
+	Error          string `json:"error,omitempty"`
+	Service        string `json:"service"`
+	Source         string `json:"source,omitempty"`
+	Status         string `json:"status"`
+	TotalJobs      int    `json:"total_jobs,omitempty"`
+	TotalProcessed int    `json:"total_processed,omitempty"`
+}
+
+type JobInfoResponse struct {
+	ValidationID     string `json:"validation_id,omitempty"`
+	ClientID         string `json:"client_id,omitempty"`
+	CompanyID        string `json:"company_id,omitempty"`
+	CreatedAt        string `json:"created_at,omitempty"`
+	Error            string `json:"error,omitempty"`
+	FinishedAt       string `json:"finished_at,omitempty"`
+	JobID            string `json:"job_id,omitempty"`
+	Result           Result `json:"result,omitempty"`
+	Service          string `json:"service"`
+	Source           string `json:"source,omitempty"`
+	Status           string `json:"status"`
+	ValidationStatus string `json:"validation_status,omitempty"`
+	ClientData       any    `json:"client_data,omitempty"`
+	Metadata         any    `json:"metadata,omitempty"`
+	Validation       any    `json:"validation,omitempty"`
+}
+
+type BatchResultJob struct {
+	JobKSUID         string `json:"job_ksuid"`
+	Status           string `json:"status"`
+	Service          string `json:"service"`
+	Error            string `json:"error,omitempty"`
+	Result           Result `json:"result,omitempty"`
+	Filename         string `json:"filename,omitempty"`
+	ClientData       any    `json:"client_data,omitempty"`
+	Validation       any    `json:"validation,omitempty"`
+	ValidationStatus string `json:"validation_status,omitempty"`
+	CreatedAt        string `json:"created_at,omitempty"`
+}
+
+type BatchResultStorageResponse struct {
+	Url string `json:"url"`
+	Exp int64  `json:"exp"`
+}
