@@ -612,7 +612,7 @@ func (client *Client) CreateAndWaitBatch(ctx context.Context,
 
 // GetJobInfo Gets job infos. Requires the job ID (only single jobs).
 func (client *Client) GetJobInfo(ctx context.Context, ID string) (JobInfoResponse, error) {
-	url := fmt.Sprintf("%s/ocr/Job/info/%s", client.BaseURL, ID)
+	url := fmt.Sprintf("%s/ocr/job/info/%s", client.BaseURL, ID)
 
 	response, err := client.get(ctx, url, nil)
 	if err != nil {
