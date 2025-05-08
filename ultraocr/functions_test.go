@@ -2283,7 +2283,7 @@ func TestGetBatchResultStorage(t *testing.T) {
 			},
 			want: BatchResultStorageResponse{
 				Url: "123",
-				Exp: 100,
+				Exp: "100",
 			},
 		},
 		{

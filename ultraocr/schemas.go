@@ -134,5 +134,5 @@ type BatchResultJob struct {
 
 type BatchResultStorageResponse struct {
 	Url string `json:"url"`
-	Exp int64  `json:"exp"`
+	Exp string `json:"exp"`
 }
