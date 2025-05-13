@@ -148,6 +148,21 @@ func (client Client) uploadFile(ctx context.Context, url string, body io.Reader)
 	return nil
 }
 
+func (client *Client) getBatchResult(ctx context.Context, ID string, params map[string]string) ([]byte, error) {
+	url := fmt.Sprintf("%s/ocr/batch/result/%s", client.BaseURL, ID)
+
+	response, err := client.get(ctx, url, params)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.status != 200 {
+		return nil, common.ErrInvalidStatusCode
+	}
+
+	return response.body, nil
+}
+
 // Authenticate Generates a token on UltraOCR and save the token to use on future requests.
 // Requires the Client informations (ID and Secret) and the token expiration time (in minutes).
 func (client *Client) Authenticate(ctx context.Context, clientID, clientSecret string, expires int) error {
@@ -608,4 +623,89 @@ func (client *Client) CreateAndWaitBatch(ctx context.Context,
 	}
 
 	return client.WaitForBatchDone(ctx, response.Id, waitJobs)
+}
+
+// GetJobInfo Gets job infos. Requires the job ID (only single jobs).
+func (client *Client) GetJobInfo(ctx context.Context, ID string) (JobInfoResponse, error) {
+	url := fmt.Sprintf("%s/ocr/job/info/%s", client.BaseURL, ID)
+
+	response, err := client.get(ctx, url, nil)
+	if err != nil {
+		return JobInfoResponse{}, err
+	}
+
+	if response.status != 200 {
+		return JobInfoResponse{}, common.ErrInvalidStatusCode
+	}
+
+	var res JobInfoResponse
+	err = json.Unmarshal(response.body, &res)
+	if err != nil {
+		return JobInfoResponse{}, common.ErrParsingResponse
+	}
+
+	return res, nil
+}
+
+// GetBatchStatus Gets batch infos. Requires the batch ID.
+func (client *Client) GetBatchInfo(ctx context.Context, ID string) (BatchInfoResponse, error) {
+	url := fmt.Sprintf("%s/ocr/batch/info/%s", client.BaseURL, ID)
+
+	response, err := client.get(ctx, url, nil)
+	if err != nil {
+		return BatchInfoResponse{}, err
+	}
+
+	if response.status != 200 {
+		return BatchInfoResponse{}, common.ErrInvalidStatusCode
+	}
+
+	var res BatchInfoResponse
+	err = json.Unmarshal(response.body, &res)
+	if err != nil {
+		return BatchInfoResponse{}, common.ErrParsingResponse
+	}
+
+	return res, nil
+}
+
+// GetBatchResult Gets batch job results.
+func (client *Client) GetBatchResult(ctx context.Context, ID string) ([]BatchResultJob, error) {
+	params := map[string]string{
+		"return": common.RETURN_REQUEST,
+	}
+
+	body, err := client.getBatchResult(ctx, ID, params)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []BatchResultJob
+	err = json.Unmarshal(body, &res)
+	if err != nil {
+		return nil, common.ErrParsingResponse
+	}
+
+	return res, nil
+}
+
+// GetBatchStatus Gets batch job results as file.
+func (client *Client) GetBatchResultStorage(ctx context.Context, ID string, params map[string]string) (BatchResultStorageResponse, error) {
+	p := map[string]string{
+		"return": common.RETURN_STORAGE,
+	}
+	maps.Copy(p, params)
+
+	body, err := client.getBatchResult(ctx, ID, p)
+	if err != nil {
+		return BatchResultStorageResponse{}, err
+	}
+
+	var res BatchResultStorageResponse
+	err = json.Unmarshal(body, &res)
+	if err != nil {
+		return BatchResultStorageResponse{}, common.ErrParsingResponse
+	}
+
+	return res, nil
 }

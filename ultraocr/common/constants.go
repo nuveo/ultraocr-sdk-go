@@ -16,4 +16,6 @@ const (
 	KEY_FACEMATCH           = "facematch"
 	KEY_EXTRA               = "extra-document"
 	FLAG_TRUE               = "true"
+	RETURN_REQUEST          = "request"
+	RETURN_STORAGE          = "storage"
 )
