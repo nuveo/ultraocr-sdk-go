@@ -2276,7 +2276,7 @@ func TestGetBatchResultStorage(t *testing.T) {
 					MockDo: func(req *http.Request) (*http.Response, error) {
 						return &http.Response{
 							StatusCode: 200,
-							Body:       io.NopCloser(bytes.NewReader([]byte(`{"url":"123","exp":100}`))),
+							Body:       io.NopCloser(bytes.NewReader([]byte(`{"url":"123","exp":"100"}`))),
 						}, nil
 					},
 				},
